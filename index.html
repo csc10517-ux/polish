@@ -2,53 +2,52 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>POLISH_WATCH_V13</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>POLISH_WATCH_FIXED</title>
 <style>
-    /* 強制隱藏捲軸但允許捲動，用來捕捉實體錶圈訊號 */
+    /* 1. 徹底禁止畫面偏移 */
     html, body { 
         background: #000; color: #fff; margin: 0; padding: 0; 
-        width: 100%; height: 100%; overflow-y: scroll; 
-        font-family: sans-serif; touch-action: none;
+        width: 100vw; height: 100vh; 
+        overflow: hidden; /* 禁止原生滾動，防止偏移 */
+        font-family: sans-serif;
+        user-select: none;
+        touch-action: none; /* 禁用瀏覽器手勢，防止點擊偏移 */
     }
-    body::-webkit-scrollbar { display: none; }
 
     .container { 
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+        position: absolute; top: 0; left: 0; 
+        width: 100%; height: 100%; 
         display: flex; flex-direction: column; align-items: center; 
-        justify-content: center; box-sizing: border-box; overflow: hidden;
+        justify-content: center; box-sizing: border-box;
     }
     
-    /* 結果區：再往內縮，確保不被裁切 */
-    .res-area { position: absolute; top: 18%; width: 85%; display: flex; justify-content: space-around; text-align: center; }
-    .res-item b { font-size: 38px; color: #ff4d4f; display: block; line-height: 1; }
+    /* 頂部結果 */
+    .res-area { position: absolute; top: 18%; width: 80%; display: flex; justify-content: space-around; text-align: center; }
+    .res-item b { font-size: 36px; color: #ff4d4f; display: block; line-height: 1; }
     .res-item span { font-size: 11px; color: #888; }
 
-    /* 中央數值區 */
-    .center-content { text-align: center; width: 75%; z-index: 5; margin-top: 10px; }
-    .mode-label { font-size: 14px; color: #ffa940; font-weight: bold; }
-    .val-display { font-size: 58px; font-weight: bold; line-height: 1; margin: 5px 0; }
+    /* 中央數值 */
+    .center-content { text-align: center; width: 70%; z-index: 5; margin-top: 15px; }
+    .mode-label { font-size: 13px; color: #ffa940; font-weight: bold; }
+    .val-display { font-size: 55px; font-weight: bold; line-height: 1; margin: 5px 0; }
     
     .slider-container { width: 100%; margin-top: 5px; }
-    #slider { width: 100%; height: 18px; appearance: none; background: #333; border-radius: 10px; outline: none; }
-    #slider::-webkit-slider-thumb { appearance: none; width: 30px; height: 30px; background: #1890ff; border-radius: 50%; border: 2px solid #fff; }
+    #slider { width: 100%; height: 16px; appearance: none; background: #333; border-radius: 8px; outline: none; }
+    #slider::-webkit-slider-thumb { appearance: none; width: 28px; height: 28px; background: #1890ff; border-radius: 50%; border: 2px solid #fff; }
 
-    /* 四角按鈕：大幅度往中間移動 */
+    /* 四角按鈕位置 (根據 6675.jpg 優化) */
     .corner-btn { 
-        position: absolute; width: 48px; height: 48px; background: #262626; 
+        position: absolute; width: 46px; height: 46px; background: #262626; 
         border-radius: 50%; display: flex; align-items: center; justify-content: center; 
         font-size: 20px; border: 1px solid #444; z-index: 10; color: #fff; 
     }
     .corner-btn:active { background: #1890ff; }
     
-    /* 根據 6674.jpg 修正的位置：遠離邊緣 */
-    #btnPrevMode { top: 32%; left: 15%; }   /* 左上分頁 */
-    #btnNextMode { top: 32%; right: 15%; }  /* 右上分頁 */
-    #btnMinus    { bottom: 15%; left: 22%; } /* 左下微調 */
-    #btnPlus     { bottom: 15%; right: 22%; }/* 右下微調 */
-
-    /* 輔助捲動層：高度設為很大，讓錶圈轉動時能產生 scroll 事件 */
-    .scroll-helper { height: 10000px; width: 1px; pointer-events: none; }
+    #btnPrevMode { top: 32%; left: 14%; }
+    #btnNextMode { top: 32%; right: 14%; }
+    #btnMinus    { bottom: 18%; left: 20%; }
+    #btnPlus     { bottom: 18%; right: 20%; }
 </style>
 </head>
 <body>
@@ -67,14 +66,11 @@
         </div>
     </div>
 
-    <div class="corner-btn" id="btnPrevMode" onclick="changeMode(-1)">◀</div>
-    <div class="corner-btn" id="btnNextMode" onclick="changeMode(1)">▶</div>
-    <div class="corner-btn" id="btnMinus" onclick="adjustVal(-1)">－</div>
-    <div class="corner-btn" id="btnPlus" onclick="adjustVal(1)">＋</div>
+    <div class="corner-btn" onclick="changeMode(-1)" style="top: 32%; left: 14%;">◀</div>
+    <div class="corner-btn" onclick="changeMode(1)" style="top: 32%; right: 14%;">▶</div>
+    <div class="corner-btn" onclick="adjustVal(-1)" style="bottom: 18%; left: 20%;">－</div>
+    <div class="corner-btn" onclick="adjustVal(1)" style="bottom: 18%; right: 20%;">＋</div>
 </div>
-
-<!-- 用來捕捉實體錶圈轉動的隱形層 -->
-<div class="scroll-helper"></div>
 
 <script>
     const slider = document.getElementById('slider');
@@ -91,7 +87,7 @@
         const x = data.x;
         const z = data.z;
         if (x !== 0 || z !== 0) {
-            const L = Math.sqrt(x * x + z * z);
+            const L = Math.sqrt(x*x + z*z);
             const r = L === 0 ? 1 : (L + o) / L;
             document.getElementById('rx').innerText = Math.round(x * r);
             document.getElementById('rz').innerText = Math.round(z * r);
@@ -130,27 +126,21 @@
         run();
     };
 
-    // 實體錶圈控制邏輯：監聽 scroll 事件
-    let lastScrollTop = window.pageYOffset || document.documentElement.scrollTop;
-    
-    // 初始化捲動位置到中間，確保往上往下都有空間
-    window.scrollTo(0, 5000);
-
-    window.onscroll = function() {
-        let st = window.pageYOffset || document.documentElement.scrollTop;
-        let diff = st - lastScrollTop;
-        
-        if (Math.abs(diff) > 2) { // 稍微有動才算
-            adjustVal(diff > 0 ? -1 : 1);
-            lastScrollTop = st;
-            
-            // 轉到底自動重置位置，維持無限轉動效果
-            if (st < 2000 || st > 8000) {
-                window.scrollTo(0, 5000);
-                lastScrollTop = 5000;
-            }
-        }
+    // 解決「裱框/實體錶圈」連動的核心程式碼
+    const handleWheel = (e) => {
+        e.preventDefault(); // 阻止頁面偏移/捲動
+        const delta = e.wheelDelta || -e.deltaY; // 捕捉多種瀏覽器的轉盤訊號
+        if (delta > 0) adjustVal(1);
+        else if (delta < 0) adjustVal(-1);
     };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('mousewheel', handleWheel, { passive: false });
+
+    // 解決「點擊畫面偏移」：禁止縮放與雙擊行為
+    document.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
 
     updateUI();
 </script>
