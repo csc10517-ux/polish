@@ -100,5 +100,29 @@ doUpdate(parseInt(s.value));
 }
 doChangeP(0);
 </script>
+  <script>
+// 監聽手錶轉盤（捲動）事件
+window.addEventListener('wheel', (event) => {
+    // 找到您的滑桿，根據圖片 6660.jpg 第 18 行，您的 ID 應該是 slider
+    const slider = document.getElementById('slider'); 
+    
+    if (slider) {
+        // 取得步進值，如果沒設就預設為 1
+        let step = parseFloat(slider.step) || 1;
+        // 轉盤往上轉 (deltaY < 0) 增加數值，往下轉則減少
+        if (event.deltaY < 0) {
+            slider.value = parseFloat(slider.value) + step;
+        } else {
+            slider.value = parseFloat(slider.value) - step;
+        }
+        
+        // 觸發 input 事件，讓您的計算公式 (X/Z軸) 自動更新
+        slider.dispatchEvent(new Event('input'));
+    }
+    
+    // 防止網頁上下捲動，讓轉盤專心控制數值
+    event.preventDefault();
+}, { passive: false });
+</script>
 </body>
 </html>
