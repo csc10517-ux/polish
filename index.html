@@ -3,55 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>POLISH_WATCH_V10</title>
+<title>POLISH_WATCH_FINAL</title>
 <style>
     html, body { background: #000; color: #fff; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: sans-serif; touch-action: none; }
-    .container { display: flex; flex-direction: column; align-items: center; width: 100vw; height: 100vh; padding: 10px; box-sizing: border-box; justify-content: space-between; }
+    .container { display: flex; flex-direction: column; align-items: center; width: 100vw; height: 100vh; padding: 12px; box-sizing: border-box; justify-content: space-between; }
     
-    /* 頂部顯示項 */
-    .header { text-align: center; width: 100%; }
-    .mode-label { font-size: 16px; color: #ffa940; font-weight: bold; }
-    .val-display { font-size: 55px; font-weight: bold; line-height: 1.1; margin: 2px 0; }
-
-    /* 滑桿 (拉桿) */
-    .slider-container { width: 90%; }
-    #slider { width: 100%; height: 25px; appearance: none; background: #333; border-radius: 15px; outline: none; }
-    #slider::-webkit-slider-thumb { appearance: none; width: 35px; height: 35px; background: #1890ff; border-radius: 50%; border: 3px solid #fff; }
-
-    /* 方向鍵 (放大尺寸) */
-    .btn-grid { display: grid; grid-template-areas: ". up ." "left down right"; gap: 10px; }
-    .ctrl-btn { width: 60px; height: 45px; background: #262626; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: white; border: 1px solid #444; }
-    .ctrl-btn:active { background: #1890ff; }
-
-    /* 底層結果表 (簡化為兩大格) */
-    .res-box { width: 100%; display: flex; justify-content: space-around; background: #141414; padding: 8px 0; border-top: 1px solid #333; }
+    /* 頂部結果區：將最重要的結果上移 */
+    .res-header { width: 100%; display: flex; justify-content: space-around; background: #1a1a1a; border-radius: 10px; padding: 6px 0; border: 1px solid #333; }
     .res-item { text-align: center; }
-    .res-item span { display: block; font-size: 11px; color: #888; }
-    .res-item b { font-size: 24px; color: #ff4d4f; }
+    .res-item span { display: block; font-size: 10px; color: #888; text-transform: uppercase; }
+    .res-item b { font-size: 26px; color: #ff4d4f; }
+
+    /* 中間輸入數值區 */
+    .input-box { text-align: center; margin-top: 5px; }
+    .mode-label { font-size: 14px; color: #ffa940; font-weight: bold; }
+    .val-display { font-size: 48px; font-weight: bold; color: #fff; line-height: 1; }
+
+    /* 滑桿：稍微縮小寬度，留空間給圓形螢幕邊緣 */
+    .slider-container { width: 80%; margin: 8px 0; }
+    #slider { width: 100%; height: 18px; appearance: none; background: #333; border-radius: 10px; outline: none; }
+    #slider::-webkit-slider-thumb { appearance: none; width: 28px; height: 28px; background: #1890ff; border-radius: 50%; border: 2px solid #fff; }
+
+    /* 底部按鈕區：緊湊排列 */
+    .btn-grid { display: grid; grid-template-areas: ". up ." "left down right"; gap: 6px; margin-bottom: 5px; }
+    .ctrl-btn { width: 48px; height: 38px; background: #262626; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: white; border: none; }
+    .ctrl-btn:active { background: #1890ff; }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
+    <!-- 1. 結果直接放最上面，一眼就看到 -->
+    <div class="res-header">
+        <div class="res-item"><span>X1 結果</span><b id="rx">-</b></div>
+        <div class="res-item"><span>Z1 結果</span><b id="rz">-</b></div>
+    </div>
+
+    <!-- 2. 輸入數值顯示 -->
+    <div class="input-box">
         <div class="mode-label" id="curLabel">補正值 (Offset)</div>
         <div class="val-display" id="curVal">175</div>
     </div>
     
+    <!-- 3. 拉桿 -->
     <div class="slider-container">
         <input type="range" id="slider" min="0" max="300" value="175">
     </div>
 
+    <!-- 4. 方向鍵 -->
     <div class="btn-grid">
         <button class="ctrl-btn" style="grid-area: up" onclick="move('up')">▲</button>
         <button class="ctrl-btn" style="grid-area: left" onclick="move('left')">◀</button>
         <button class="ctrl-btn" style="grid-area: down" onclick="move('down')">▼</button>
         <button class="ctrl-btn" style="grid-area: right" onclick="move('right')">▶</button>
-    </div>
-
-    <div class="res-box">
-        <div class="res-item"><span>X1 結果</span><b id="td_rx0">-</b></div>
-        <div class="res-item"><span>Z1 結果</span><b id="td_rz0">-</b></div>
     </div>
 </div>
 
@@ -72,11 +76,11 @@
         if (x !== 0 || z !== 0) {
             const L = Math.sqrt(x * x + z * z);
             const r = L === 0 ? 1 : (L + o) / L;
-            document.getElementById('td_rx0').innerText = Math.round(x * r);
-            document.getElementById('td_rz0').innerText = Math.round(z * r);
+            document.getElementById('rx').innerText = Math.round(x * r);
+            document.getElementById('rz').innerText = Math.round(z * r);
         } else {
-            document.getElementById('td_rx0').innerText = "-";
-            document.getElementById('td_rz0').innerText = "-";
+            document.getElementById('rx').innerText = "-";
+            document.getElementById('rz').innerText = "-";
         }
     }
 
@@ -85,12 +89,8 @@
         curLabel.innerText = labels[currentIdx];
         curVal.innerText = data[key];
         
-        // 動態切換範圍
-        if (key === "offset") {
-            slider.min = 0; slider.max = 300;
-        } else {
-            slider.min = -500; slider.max = 500;
-        }
+        if (key === "offset") { slider.min = 0; slider.max = 300; }
+        else { slider.min = -500; slider.max = 500; }
         slider.value = data[key];
         run();
     }
@@ -109,17 +109,14 @@
         run();
     };
 
-    // 強制連動錶圈轉盤
+    // 徹底修復錶圈驅動：直接接管瀏覽器滾動事件
     window.addEventListener('wheel', (e) => {
         e.preventDefault();
-        let step = 1;
-        // 根據轉速調整步進 (選填)
-        if (Math.abs(e.deltaY) > 50) step = 5;
+        // 偵測滾動方向
+        if (e.deltaY < 0) data[fields[currentIdx]] += 1;
+        else data[fields[currentIdx]] -= 1;
         
-        if (e.deltaY < 0) data[fields[currentIdx]] += step;
-        else data[fields[currentIdx]] -= step;
-        
-        // 限制範圍
+        // 限制邊界
         const key = fields[currentIdx];
         if(key === "offset") data[key] = Math.max(0, Math.min(300, data[key]));
         else data[key] = Math.max(-500, Math.min(500, data[key]));
@@ -127,8 +124,8 @@
         updateUI();
     }, { passive: false });
 
-    // 針對手錶優化：觸碰螢幕時停止頁面滾動，讓錶圈專心控制滑桿
-    document.addEventListener('touchstart', (e) => { if(e.touches.length > 1) e.preventDefault(); }, {passive: false});
+    // 修正手錶拉桿拖動
+    slider.addEventListener('touchstart', (e) => e.stopPropagation(), {passive: true});
 
     updateUI();
 </script>
