@@ -130,11 +130,11 @@
             autoInterval = setInterval(() => {
                 count++;
                 let speed = 1;
-                if (count > 25) speed = 10; // 按住超過 2 秒，一次跳 10
-                if (count > 50) speed = 25; // 按住超過 4 秒，一次跳 25
+                if (count > 10) speed = 10; // 按住超過 2 秒，一次跳 10
+                if (count > 30) speed = 25; // 按住超過 4 秒，一次跳 25
                 adjust(dir * speed);
             }, 80);
-        }, 400); // 按住 0.4 秒後啟動連發
+        }, 300); // 按住 0.3 秒後啟動連發
     }
 
     function stopAuto() {
