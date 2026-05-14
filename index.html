@@ -3,46 +3,44 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>POLISH_WATCH_V11</title>
+<title>POLISH_WATCH_V12</title>
 <style>
     html, body { background: #000; color: #fff; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: sans-serif; touch-action: none; }
     .container { position: relative; width: 100vw; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; }
     
-    /* 頂部巨大化結果 */
-    .res-area { position: absolute; top: 12%; width: 100%; display: flex; justify-content: space-around; text-align: center; }
-    .res-item b { font-size: 42px; color: #ff4d4f; display: block; line-height: 1; }
+    /* 頂部結果：位置稍微下移一點點 */
+    .res-area { position: absolute; top: 15%; width: 100%; display: flex; justify-content: space-around; text-align: center; pointer-events: none; }
+    .res-item b { font-size: 40px; color: #ff4d4f; display: block; line-height: 1; }
     .res-item span { font-size: 12px; color: #888; }
 
-    /* 中央數值與拉桿 */
-    .center-content { text-align: center; width: 85%; z-index: 5; }
-    .mode-label { font-size: 16px; color: #ffa940; font-weight: bold; margin-bottom: 5px; }
-    .val-display { font-size: 65px; font-weight: bold; line-height: 1; margin: 5px 0; color: #fff; }
+    /* 中央數值 */
+    .center-content { text-align: center; width: 80%; z-index: 5; }
+    .mode-label { font-size: 14px; color: #ffa940; font-weight: bold; }
+    .val-display { font-size: 60px; font-weight: bold; line-height: 1; margin: 5px 0; color: #fff; }
     
-    .slider-container { width: 100%; margin-top: 10px; }
-    #slider { width: 100%; height: 22px; appearance: none; background: #333; border-radius: 11px; outline: none; }
-    #slider::-webkit-slider-thumb { appearance: none; width: 38px; height: 38px; background: #1890ff; border-radius: 50%; border: 3px solid #fff; }
+    .slider-container { width: 100%; margin-top: 8px; }
+    #slider { width: 100%; height: 20px; appearance: none; background: #333; border-radius: 10px; outline: none; }
+    #slider::-webkit-slider-thumb { appearance: none; width: 32px; height: 32px; background: #1890ff; border-radius: 50%; border: 2px solid #fff; }
 
-    /* 四角圓圈按鈕 (參考 6672.jpg) */
-    .corner-btn { position: absolute; width: 55px; height: 55px; background: #262626; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; border: 1px solid #444; z-index: 10; color: #fff; }
+    /* 四角按鈕：往中間進來一點 */
+    .corner-btn { position: absolute; width: 52px; height: 52px; background: #262626; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; border: 1px solid #444; z-index: 10; color: #fff; touch-action: manipulation; }
     .corner-btn:active { background: #1890ff; }
     
-    /* 位置分佈 */
-    #btnPrevMode { top: 25%; left: 2%; }  /* 左上: 上一頁 */
-    #btnNextMode { top: 25%; right: 2%; } /* 右上: 下一頁 */
-    #btnMinus    { bottom: 5%; left: 10%; } /* 左下: 減 */
-    #btnPlus     { bottom: 5%; right: 10%; }/* 右下: 加 */
+    /* 修正後的按鈕位置 */
+    #btnPrevMode { top: 28%; left: 8%; }   /* 左上：分頁◀ */
+    #btnNextMode { top: 28%; right: 8%; }  /* 右上：分頁▶ */
+    #btnMinus    { bottom: 10%; left: 15%; } /* 左下：微調－ */
+    #btnPlus     { bottom: 10%; right: 15%; }/* 右下：微調＋ */
 </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- 結果區 -->
+<div class="container" id="mainContainer">
     <div class="res-area">
         <div class="res-item"><span>X1</span><b id="rx">-</b></div>
         <div class="res-item"><span>Z1</span><b id="rz">-</b></div>
     </div>
 
-    <!-- 中央輸入區 -->
     <div class="center-content">
         <div class="mode-label" id="curLabel">補正值 (Offset)</div>
         <div class="val-display" id="curVal">175</div>
@@ -51,7 +49,7 @@
         </div>
     </div>
 
-    <!-- 四角按鈕 -->
+    <!-- 按鈕內移 -->
     <div class="corner-btn" id="btnPrevMode" onclick="changeMode(-1)">◀</div>
     <div class="corner-btn" id="btnNextMode" onclick="changeMode(1)">▶</div>
     <div class="corner-btn" id="btnMinus" onclick="adjustVal(-1)">－</div>
@@ -102,11 +100,8 @@
     function adjustVal(delta) {
         const key = fields[currentIdx];
         data[key] += delta;
-        
-        // 限制範圍
         if(key === "offset") data[key] = Math.max(0, Math.min(300, data[key]));
         else data[key] = Math.max(-500, Math.min(500, data[key]));
-        
         updateUI();
     }
 
@@ -116,12 +111,18 @@
         run();
     };
 
-    // 支援 Watch8 實體錶圈 (Bezel)
+    // 強制捕捉 Galaxy Watch 實體錶圈 (Wheel)
     window.addEventListener('wheel', (e) => {
         e.preventDefault();
-        // 轉動幅度偵測
-        const step = Math.abs(e.deltaY) > 50 ? 5 : 1;
-        adjustVal(e.deltaY < 0 ? step : -step);
+        // 增加靈敏度判斷
+        const delta = e.deltaY;
+        const step = Math.abs(delta) > 10 ? (delta > 0 ? -1 : 1) : 0;
+        if (step !== 0) adjustVal(step);
+    }, { passive: false });
+
+    // 額外監聽：確保在 container 上的轉動也能被捕獲
+    document.getElementById('mainContainer').addEventListener('wheel', (e) => {
+        e.preventDefault();
     }, { passive: false });
 
     updateUI();
