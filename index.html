@@ -3,41 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>POLISH_WATCH_V9</title>
+<title>POLISH_WATCH_V10</title>
 <style>
     html, body { background: #000; color: #fff; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: sans-serif; touch-action: none; }
-    .container { display: flex; flex-direction: column; align-items: center; width: 100vw; height: 100vh; padding: 5px; box-sizing: border-box; justify-content: center; }
+    .container { display: flex; flex-direction: column; align-items: center; width: 100vw; height: 100vh; padding: 10px; box-sizing: border-box; justify-content: space-between; }
     
-    /* 當前編輯顯示區 */
-    .mode-label { font-size: 14px; color: #ffa940; font-weight: bold; margin-bottom: 2px; }
-    .val-display { font-size: 45px; font-weight: bold; color: #fff; margin-bottom: 5px; }
+    /* 頂部顯示項 */
+    .header { text-align: center; width: 100%; }
+    .mode-label { font-size: 16px; color: #ffa940; font-weight: bold; }
+    .val-display { font-size: 55px; font-weight: bold; line-height: 1.1; margin: 2px 0; }
 
-    /* 滑桿 */
-    .slider-container { width: 85%; margin-bottom: 8px; }
-    #slider { width: 100%; height: 15px; appearance: none; background: #333; border-radius: 10px; outline: none; }
-    #slider::-webkit-slider-thumb { appearance: none; width: 25px; height: 25px; background: #1890ff; border-radius: 50%; }
+    /* 滑桿 (拉桿) */
+    .slider-container { width: 90%; }
+    #slider { width: 100%; height: 25px; appearance: none; background: #333; border-radius: 15px; outline: none; }
+    #slider::-webkit-slider-thumb { appearance: none; width: 35px; height: 35px; background: #1890ff; border-radius: 50%; border: 3px solid #fff; }
 
-    /* 方向鍵區 (仿照您手機版的 keypad) */
-    .btn-grid { display: grid; grid-template-areas: ". up ." "left down right"; gap: 6px; margin-bottom: 10px; }
-    .ctrl-btn { width: 50px; height: 40px; background: #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: white; border: none; }
+    /* 方向鍵 (放大尺寸) */
+    .btn-grid { display: grid; grid-template-areas: ". up ." "left down right"; gap: 10px; }
+    .ctrl-btn { width: 60px; height: 45px; background: #262626; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 26px; color: white; border: 1px solid #444; }
     .ctrl-btn:active { background: #1890ff; }
 
-    /* 計算表格 (縮小以適應手錶) */
-    .res-table { width: 95%; border-collapse: collapse; background: #111; font-size: 14px; text-align: center; border: 1px solid #333; }
-    .res-table th { background: #222; color: #888; font-size: 11px; padding: 2px; }
-    .res-table td { border: 1px solid #222; padding: 5px 0; font-weight: bold; }
-    .active-row { background: rgba(24, 144, 255, 0.2); } /* 正在編輯的那一列變色 */
-    .highlight { color: #ff4d4f; }
+    /* 底層結果表 (簡化為兩大格) */
+    .res-box { width: 100%; display: flex; justify-content: space-around; background: #141414; padding: 8px 0; border-top: 1px solid #333; }
+    .res-item { text-align: center; }
+    .res-item span { display: block; font-size: 11px; color: #888; }
+    .res-item b { font-size: 24px; color: #ff4d4f; }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="mode-label" id="curLabel">補正值 (Offset)</div>
-    <div class="val-display" id="curVal">175</div>
+    <div class="header">
+        <div class="mode-label" id="curLabel">補正值 (Offset)</div>
+        <div class="val-display" id="curVal">175</div>
+    </div>
     
     <div class="slider-container">
-        <input type="range" id="slider" min="0" max="1000" value="175">
+        <input type="range" id="slider" min="0" max="300" value="175">
     </div>
 
     <div class="btn-grid">
@@ -47,13 +49,10 @@
         <button class="ctrl-btn" style="grid-area: right" onclick="move('right')">▶</button>
     </div>
 
-    <table class="res-table">
-        <tr><th>X</th><th>Z</th><th>X1</th><th>Z1</th></tr>
-        <tr id="row0">
-            <td id="td_x0">0</td><td id="td_z0">0</td>
-            <td id="td_rx0" class="highlight">-</td><td id="td_rz0" class="highlight">-</td>
-        </tr>
-    </table>
+    <div class="res-box">
+        <div class="res-item"><span>X1 結果</span><b id="td_rx0">-</b></div>
+        <div class="res-item"><span>Z1 結果</span><b id="td_rz0">-</b></div>
+    </div>
 </div>
 
 <script>
@@ -61,13 +60,7 @@
     const curVal = document.getElementById('curVal');
     const curLabel = document.getElementById('curLabel');
 
-    // 數據結構：對應您的 id0 ~ id2 (手錶版先簡化為一組輸入以維持大字體)
-    let data = {
-        offset: 175,
-        x: 0,
-        z: 0
-    };
-    
+    let data = { offset: 175, x: 0, z: 0 };
     const fields = ["offset", "x", "z"];
     const labels = ["補正值 (Offset)", "X 座標", "Z 座標"];
     let currentIdx = 0;
@@ -76,9 +69,7 @@
         const o = data.offset;
         const x = data.x;
         const z = data.z;
-
         if (x !== 0 || z !== 0) {
-            // 您的原始公式
             const L = Math.sqrt(x * x + z * z);
             const r = L === 0 ? 1 : (L + o) / L;
             document.getElementById('td_rx0').innerText = Math.round(x * r);
@@ -87,19 +78,20 @@
             document.getElementById('td_rx0').innerText = "-";
             document.getElementById('td_rz0').innerText = "-";
         }
-        
-        document.getElementById('td_x0').innerText = x;
-        document.getElementById('td_z0').innerText = z;
     }
 
     function updateUI() {
         const key = fields[currentIdx];
         curLabel.innerText = labels[currentIdx];
         curVal.innerText = data[key];
-        slider.value = data[key];
         
-        // 切換時表格高亮提醒
-        document.getElementById('row0').className = (currentIdx > 0) ? "active-row" : "";
+        // 動態切換範圍
+        if (key === "offset") {
+            slider.min = 0; slider.max = 300;
+        } else {
+            slider.min = -500; slider.max = 500;
+        }
+        slider.value = data[key];
         run();
     }
 
@@ -117,14 +109,26 @@
         run();
     };
 
-    // 支援 Watch8 實體錶圈 (Wheel)
+    // 強制連動錶圈轉盤
     window.addEventListener('wheel', (e) => {
-        const step = 1;
+        e.preventDefault();
+        let step = 1;
+        // 根據轉速調整步進 (選填)
+        if (Math.abs(e.deltaY) > 50) step = 5;
+        
         if (e.deltaY < 0) data[fields[currentIdx]] += step;
         else data[fields[currentIdx]] -= step;
+        
+        // 限制範圍
+        const key = fields[currentIdx];
+        if(key === "offset") data[key] = Math.max(0, Math.min(300, data[key]));
+        else data[key] = Math.max(-500, Math.min(500, data[key]));
+        
         updateUI();
-        e.preventDefault();
     }, { passive: false });
+
+    // 針對手錶優化：觸碰螢幕時停止頁面滾動，讓錶圈專心控制滑桿
+    document.addEventListener('touchstart', (e) => { if(e.touches.length > 1) e.preventDefault(); }, {passive: false});
 
     updateUI();
 </script>
