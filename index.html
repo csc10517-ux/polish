@@ -1,155 +1,172 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>POLISH_FIX_V17</title>
+<title>POLISH_FIX_OK</title>
 <style>
-    /* 核心鎖定：overscroll-behavior 是解決「手指按住偏掉」的特效藥 */
     html, body { 
         background: #000; color: #fff; margin: 0; padding: 0; 
-        width: 100%; height: 100%; 
-        overflow: hidden !important; 
-        position: fixed; 
-        touch-action: none;
-        overscroll-behavior: none; /* 防止邊緣拉動偏移 */
-        -webkit-user-select: none;
+        width: 100%; height: 100%; overflow: hidden; 
+        position: fixed; touch-action: none; -webkit-user-select: none;
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
     }
-
+    
     .container { 
         position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-    }
-    
-    /* 結果顯示：維持大字體 */
-    .res-area { position: absolute; top: 18%; width: 80%; display: flex; justify-content: space-around; pointer-events: none; }
-    .res-item b { font-size: 38px; color: #ff4d4f; display: block; line-height: 1; }
-    .res-item span { font-size: 11px; color: #888; }
-
-    /* 中央數值與滑桿 */
-    .center-content { text-align: center; width: 75%; z-index: 10; margin-top: 15px; }
-    .mode-label { font-size: 14px; color: #ffa940; font-weight: bold; }
-    .val-display { font-size: 58px; font-weight: bold; line-height: 1; margin: 5px 0; color: #fff; }
-    
-    .slider-box { width: 100%; padding: 10px 0; }
-    input[type=range] { 
-        width: 100%; height: 22px; appearance: none; background: #333; border-radius: 11px; outline: none;
-        touch-action: pan-x !important; /* 強制僅允許水平操作拉桿 */
-    }
-    input[type=range]::-webkit-slider-thumb { 
-        appearance: none; width: 38px; height: 38px; background: #1890ff; border-radius: 50%; border: 3px solid #fff; 
+        box-sizing: border-box; padding: 10px;
     }
 
-    /* 四角按鈕：內縮位置確保不被切到 */
-    .btn { 
-        position: absolute; width: 52px; height: 52px; background: #262626; 
-        border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-        font-size: 22px; border: 1px solid #444; color: #fff; z-index: 20;
+    /* 頂部結果區 */
+    .res-area { width: 90%; display: flex; justify-content: space-around; text-align: center; margin-bottom: 15px; }
+    .res-item span { font-size: 13px; color: #888; display: block; margin-bottom: 2px; }
+    .res-item b { font-size: 42px; color: #ff4d4f; display: block; line-height: 1; font-weight: bold; min-width: 60px; }
+
+    /* 模式切換 (◀ 項目 ▶) */
+    .mode-switcher { 
+        display: flex; align-items: center; justify-content: space-between; 
+        width: 80%; height: 45px; margin-bottom: 5px;
     }
-    .btn:active { background: #1890ff; }
+    .nav-btn { 
+        width: 42px; height: 42px; background: #262626; border-radius: 50%; 
+        display: flex; align-items: center; justify-content: center; font-size: 18px; 
+        border: 1px solid #444; color: #fff;
+    }
+    .nav-btn:active { background: #1890ff; }
+    .mode-label { font-size: 15px; color: #ffa940; font-weight: bold; width: 130px; text-align: center; }
+
+    /* 中央目前數值 */
+    .val-display { font-size: 68px; font-weight: bold; line-height: 1; color: #fff; margin-bottom: 20px; text-align: center; }
+
+    /* 下方大加減鍵 */
+    .control-row { display: flex; justify-content: space-between; width: 80%; height: 65px; }
+    .big-btn { 
+        width: 45%; height: 100%; background: #222; border: 1px solid #444; 
+        border-radius: 15px; display: flex; align-items: center; justify-content: center; 
+        font-size: 35px; color: #fff; font-weight: bold;
+    }
+    .big-btn:active { background: #1890ff; border-color: #fff; }
 </style>
 </head>
 <body oncontextmenu="return false;">
 
-<div class="container" id="mainLayer">
+<div class="container">
     <div class="res-area">
         <div class="res-item"><span>X1</span><b id="rx">-</b></div>
         <div class="res-item"><span>Z1</span><b id="rz">-</b></div>
     </div>
 
-    <div class="center-content">
+    <div class="mode-switcher">
+        <div class="nav-btn" id="b_prev">◀</div>
         <div id="curLabel" class="mode-label">補正值 (Offset)</div>
-        <div id="curVal" class="val-display">175</div>
-        <div class="slider-box">
-            <input type="range" id="slider" min="0" max="300" value="175">
-        </div>
+        <div class="nav-btn" id="b_next">▶</div>
     </div>
 
-    <div class="btn" style="top: 32%; left: 14%;" id="b_pM">◀</div>
-    <div class="btn" style="top: 32%; right: 14%;" id="b_nM">▶</div>
-    <div class="btn" style="bottom: 18%; left: 20%;" id="b_mS">－</div>
-    <div class="btn" style="bottom: 18%; right: 20%;" id="b_pS">＋</div>
+    <div id="curVal" class="val-display">175</div>
+
+    <div class="control-row">
+        <div class="big-btn" id="b_minus">－</div>
+        <div class="big-btn" id="b_plus">＋</div>
+    </div>
 </div>
 
 <script>
+    // 初始資料
     let data = { offset: 175, x: 0, z: 0 };
     const fields = ["offset", "x", "z"];
     const labels = ["補正值 (Offset)", "X 座標", "Z 座標"];
     let currentIdx = 0;
 
-    const slider = document.getElementById('slider');
+    const rx = document.getElementById('rx');
+    const rz = document.getElementById('rz');
     const curVal = document.getElementById('curVal');
     const curLabel = document.getElementById('curLabel');
 
-    function run() {
-        const o = data.offset, x = data.x, z = data.z;
+    // 核心斜邊計算公式 (修復了未觸發計算的錯誤)
+    function calculate() {
+        const o = data.offset;
+        const x = data.x;
+        const z = data.z;
+        
+        // 只要 X 或 Z 其中一個不是 0，就進行計算
         if (x !== 0 || z !== 0) {
-            const L = Math.sqrt(x*x+z*z);
-            const r = (L+o)/L;
-            document.getElementById('rx').innerText = Math.round(x*r);
-            document.getElementById('rz').innerText = Math.round(z*r);
+            const L = Math.sqrt(x * x + z * z);
+            const r = (L + o) / L;
+            rx.innerText = Math.round(x * r);
+            rz.innerText = Math.round(z * r);
         } else {
-            document.getElementById('rx').innerText = "-";
-            document.getElementById('rz').innerText = "-";
+            rx.innerText = "-";
+            rz.innerText = "-";
         }
     }
 
+    // 刷新畫面顯示
     function syncUI() {
         const key = fields[currentIdx];
         curLabel.innerText = labels[currentIdx];
         curVal.innerText = data[key];
-        slider.min = (key === "offset") ? 0 : -500;
-        slider.max = (key === "offset") ? 300 : 500;
-        slider.value = data[key];
-        run();
+        calculate(); // 確保每次切換、修改都一定會重新計算
         window.scrollTo(0, 0); 
     }
 
+    // 執行數值加減（包含防呆邊界）
     function adjust(n) {
         const key = fields[currentIdx];
-        data[key] = Math.max(slider.min, Math.min(slider.max, data[key] + n));
-        syncUI();
+        const min = (key === "offset") ? 0 : -500;
+        const max = (key === "offset") ? 300 : 500;
+        data[key] = Math.max(min, Math.min(max, data[key] + n));
+        syncUI(); // 呼叫 syncUI，裡面包含真正執行計算的 calculate()
     }
 
-    // 事件攔截：防止手指按住導致視窗偏移
-    const bind = (id, fn) => {
+    // --- 長按連續變速飆字邏輯 ---
+    let autoInterval = null;
+    let autoTimeout = null;
+
+    function startAuto(dir) {
+        adjust(dir); // 按下去第一時間先加減 1
+        autoTimeout = setTimeout(() => {
+            let count = 0;
+            autoInterval = setInterval(() => {
+                count++;
+                let speed = 1;
+                if (count > 25) speed = 10; // 按住超過 2 秒，一次跳 10
+                if (count > 50) speed = 25; // 按住超過 4 秒，一次跳 25
+                adjust(dir * speed);
+            }, 80);
+        }, 400); // 按住 0.4 秒後啟動連發
+    }
+
+    function stopAuto() {
+        clearTimeout(autoTimeout);
+        clearInterval(autoInterval);
+    }
+
+    // 精確觸控事件綁定 (全面攔截，防止網頁因長按偏移)
+    const bindTouch = (id, fn) => {
         document.getElementById(id).addEventListener('touchstart', (e) => {
-            e.preventDefault(); // 阻斷系統原生動作
+            e.preventDefault();
             fn();
         }, {passive: false});
     };
 
-    bind('b_pM', () => { currentIdx = (currentIdx + 2) % 3; syncUI(); });
-    bind('b_nM', () => { currentIdx = (currentIdx + 1) % 3; syncUI(); });
-    bind('b_mS', () => adjust(-1));
-    bind('b_pS', () => adjust(1));
-
-    slider.addEventListener('input', () => {
-        data[fields[currentIdx]] = parseInt(slider.value);
-        curVal.innerText = slider.value;
-        run();
-    });
-
-    // 實體裱框 (Bezel) 連動 - 終極嘗試方案
-    const onBezel = (e) => {
-        e.preventDefault();
-        const delta = e.deltaY || e.wheelDelta || (e.detail ? e.detail * -40 : 0);
-        adjust(delta > 0 ? -1 : 1);
+    const bindLongPress = (id, dir) => {
+        const el = document.getElementById(id);
+        el.addEventListener('touchstart', (e) => { e.preventDefault(); startAuto(dir); }, {passive: false});
+        el.addEventListener('touchend', (e) => { e.preventDefault(); stopAuto(); });
+        el.addEventListener('touchcancel', () => stopAuto());
     };
 
-    window.addEventListener('wheel', onBezel, {passive: false});
-    window.addEventListener('mousewheel', onBezel, {passive: false});
-    document.addEventListener('DOMMouseScroll', onBezel, {passive: false});
-    // 三星手錶專用事件
-    document.addEventListener('rotarydetent', (e) => {
-        adjust(e.detail.direction === 'CW' ? 1 : -1);
-    });
+    // 綁定所有按鈕事件
+    bindTouch('b_prev', () => { currentIdx = (currentIdx - 1 + 3) % 3; syncUI(); });
+    bindTouch('b_next', () => { currentIdx = (currentIdx + 1) % 3; syncUI(); });
+    bindLongPress('b_minus', -1);
+    bindLongPress('b_plus', 1);
 
-    // 鎖死背景
-    document.addEventListener('touchmove', (e) => {
-        if (e.target.id !== 'slider') e.preventDefault();
-    }, {passive: false});
+    // 阻斷瀏覽器原生的全網頁拖動手勢
+    document.addEventListener('touchmove', (e) => e.preventDefault(), {passive: false});
 
+    // 首次進網頁初始化
     syncUI();
 </script>
 </body>
