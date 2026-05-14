@@ -3,28 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>POLISH_V9_PRO</title>
+<title>POLISH_V9_PRO_FINAL</title>
 <style>
     html, body { background: #000; color: #fff; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: sans-serif; touch-action: none; }
     .container { display: flex; flex-direction: column; align-items: center; width: 100vw; height: 100vh; padding: 5px; box-sizing: border-box; justify-content: center; }
     
-    /* 數值顯示區 */
-    .val-display { font-size: 60px; font-weight: bold; color: #fff; margin-bottom: 5px; }
+    .val-display { font-size: 55px; font-weight: bold; color: #fff; margin-bottom: 5px; }
 
-    /* 滑桿區塊 */
     .slider-container { width: 85%; margin-bottom: 15px; }
     #slider { width: 100%; height: 25px; appearance: none; background: #333; border-radius: 15px; outline: none; }
     #slider::-webkit-slider-thumb { appearance: none; width: 35px; height: 35px; background: #fff; border-radius: 50%; border: 3px solid #00ccff; }
 
-    /* 放大後的切換選單區 */
-    .nav-group { width: 90%; display: flex; align-items: center; justify-content: space-between; background: #111; border-radius: 15px; padding: 5px; margin-bottom: 15px; }
-    .nav-btn { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 30px; background: #333; border-radius: 10px; color: #fff; border: 1px solid #444; }
-    .nav-btn:active { background: #555; }
-    .mode-title { font-size: 20px; color: #00ccff; font-weight: bold; min-width: 90px; text-align: center; }
+    .nav-group { width: 95%; display: flex; align-items: center; justify-content: space-between; background: #111; border-radius: 15px; padding: 5px; margin-bottom: 15px; }
+    .nav-btn { width: 65px; height: 65px; display: flex; align-items: center; justify-content: center; font-size: 30px; background: #333; border-radius: 10px; color: #fff; border: 1px solid #444; }
+    .mode-title { font-size: 18px; color: #00ccff; font-weight: bold; min-width: 100px; text-align: center; }
 
-    /* 結果顯示區 */
-    .res-area { padding: 15px; background: rgba(0, 204, 255, 0.1); width: 85%; text-align: center; font-size: 24px; border-radius: 12px; border: 1px solid #00ccff; }
-    .res-label { font-size: 14px; color: #aaa; margin-bottom: 5px; display: block; }
+    .res-area { padding: 15px; background: rgba(0, 204, 255, 0.1); width: 85%; text-align: center; font-size: 22px; border-radius: 12px; border: 1px solid #00ccff; }
 </style>
 </head>
 <body>
@@ -33,18 +27,17 @@
     <div class="val-display" id="val">210</div>
     
     <div class="slider-container">
-        <input type="range" id="slider" min="0" max="500" value="210">
+        <input type="range" id="slider" min="0" max="1000" value="210">
     </div>
 
     <div class="nav-group">
-        <div class="nav-btn" id="prevBtn"> < </div>
-        <div class="mode-title" id="mode">INPUT_Z</div>
-        <div class="nav-btn" id="nextBtn"> > </div>
+        <div class="nav-btn" id="prevBtn">&lt;</div>
+        <div class="mode-title" id="mode">INPUT_X</div>
+        <div class="nav-btn" id="nextBtn">&gt;</div>
     </div>
 
     <div class="res-area">
-        <span class="res-label">RESULT (X/Z)</span>
-        <span id="res">0 / 337</span>
+        RESULT: <span id="res">0</span>
     </div>
 </div>
 
@@ -54,45 +47,41 @@
     const modeDisplay = document.getElementById('mode');
     const resDisplay = document.getElementById('res');
     
-    let currentMode = "Z"; // 預設 Z 模式
+    const modes = ["INPUT_X", "INPUT_Z", "OFFSET"];
+    let currentIndex = 0;
 
-    // 更新計算邏輯 (請根據您的公式修改這裡)
-    function updateCalc() {
-        const v = parseInt(slider.value);
-        valDisplay.innerText = v;
+    function updateView() {
+        valDisplay.innerText = slider.value;
+        modeDisplay.innerText = modes[currentIndex];
         
-        if(currentMode === "Z") {
-            resDisplay.innerText = `0 / ${Math.round(v * 1.6)}`; // 範例公式
-        } else {
-            resDisplay.innerText = `${Math.round(v * 0.8)} / 0`; // 範例公式
-        }
+        // 這裡您可以根據 currentIndex 或 modes[currentIndex] 加入您的計算公式
+        let v = parseInt(slider.value);
+        if(modes[currentIndex] === "INPUT_X") resDisplay.innerText = (v * 1.0).toFixed(2);
+        else if(modes[currentIndex] === "INPUT_Z") resDisplay.innerText = (v * 1.6).toFixed(2);
+        else resDisplay.innerText = (v - 100).toFixed(2); // OFFSET 範例公式
     }
 
-    // 切換模式邏輯 (取代原本會跳出的 alert)
-    function toggleMode() {
-        currentMode = (currentMode === "Z") ? "X" : "Z";
-        modeDisplay.innerText = `INPUT_${currentMode}`;
-        updateCalc();
-    }
+    document.getElementById('nextBtn').onclick = () => {
+        currentIndex = (currentIndex + 1) % modes.length;
+        updateView();
+    };
 
-    document.getElementById('prevBtn').onclick = toggleMode;
-    document.getElementById('nextBtn').onclick = toggleMode;
-    slider.oninput = updateCalc;
+    document.getElementById('prevBtn').onclick = () => {
+        currentIndex = (currentIndex - 1 + modes.length) % modes.length;
+        updateView();
+    };
 
-    // 實體錶圈轉動控制
+    slider.oninput = updateView;
+
+    // 錶圈控制
     window.addEventListener('wheel', (e) => {
         let step = 1;
-        if (e.deltaY < 0) {
-            slider.value = parseInt(slider.value) + step;
-        } else {
-            slider.value = parseInt(slider.value) - step;
-        }
-        updateCalc();
+        slider.value = parseInt(slider.value) + (e.deltaY < 0 ? step : -step);
+        updateView();
         e.preventDefault();
     }, { passive: false });
 
-    // 初始化
-    updateCalc();
+    updateView();
 </script>
 
 </body>
