@@ -3,126 +3,126 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>POLISH_V9_FULL_CALC</title>
+<title>POLISH_WATCH_V9</title>
 <style>
     html, body { background: #000; color: #fff; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: sans-serif; touch-action: none; }
     .container { display: flex; flex-direction: column; align-items: center; width: 100vw; height: 100vh; padding: 5px; box-sizing: border-box; justify-content: center; }
     
-    /* 數值與微調按鈕 */
-    .control-row { display: flex; align-items: center; justify-content: center; width: 100%; margin-bottom: 5px; }
-    .adj-btn { width: 50px; height: 50px; background: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; border: 1px solid #444; }
-    .val-display { font-size: 45px; font-weight: bold; margin: 0 10px; min-width: 100px; text-align: center; color: #fff; }
+    /* 當前編輯顯示區 */
+    .mode-label { font-size: 14px; color: #ffa940; font-weight: bold; margin-bottom: 2px; }
+    .val-display { font-size: 45px; font-weight: bold; color: #fff; margin-bottom: 5px; }
 
     /* 滑桿 */
-    .slider-container { width: 85%; margin-bottom: 10px; }
-    #slider { width: 100%; height: 18px; appearance: none; background: #222; border-radius: 10px; outline: none; }
-    #slider::-webkit-slider-thumb { appearance: none; width: 28px; height: 28px; background: #00ccff; border-radius: 50%; }
+    .slider-container { width: 85%; margin-bottom: 8px; }
+    #slider { width: 100%; height: 15px; appearance: none; background: #333; border-radius: 10px; outline: none; }
+    #slider::-webkit-slider-thumb { appearance: none; width: 25px; height: 25px; background: #1890ff; border-radius: 50%; }
 
-    /* 三頁切換 (選擇要輸入哪一個) */
-    .nav-group { width: 95%; display: flex; align-items: center; justify-content: space-between; background: #111; border-radius: 12px; padding: 5px; margin-bottom: 10px; }
-    .nav-btn { width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: #222; border-radius: 10px; }
-    .mode-title { font-size: 15px; color: #00ccff; font-weight: bold; }
+    /* 方向鍵區 (仿照您手機版的 keypad) */
+    .btn-grid { display: grid; grid-template-areas: ". up ." "left down right"; gap: 6px; margin-bottom: 10px; }
+    .ctrl-btn { width: 50px; height: 40px; background: #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 22px; color: white; border: none; }
+    .ctrl-btn:active { background: #1890ff; }
 
-    /* 計算結果表格 (參考 6664.jpg) */
-    .res-table { width: 90%; background: #1a1a1a; border-radius: 8px; border-collapse: collapse; overflow: hidden; }
-    .res-table th { background: #333; font-size: 12px; padding: 4px; color: #aaa; }
-    .res-table td { border: 1px solid #333; text-align: center; padding: 8px 0; font-size: 20px; font-weight: bold; }
-    .highlight { color: #ff4d4d; } /* 類似 6664.jpg 的紅色結果 */
+    /* 計算表格 (縮小以適應手錶) */
+    .res-table { width: 95%; border-collapse: collapse; background: #111; font-size: 14px; text-align: center; border: 1px solid #333; }
+    .res-table th { background: #222; color: #888; font-size: 11px; padding: 2px; }
+    .res-table td { border: 1px solid #222; padding: 5px 0; font-weight: bold; }
+    .active-row { background: rgba(24, 144, 255, 0.2); } /* 正在編輯的那一列變色 */
+    .highlight { color: #ff4d4f; }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- 1. 當前輸入項數值 -->
-    <div class="control-row">
-        <div class="adj-btn" id="minus">-</div>
-        <div class="val-display" id="val">300</div>
-        <div class="adj-btn" id="plus">+</div>
-    </div>
+    <div class="mode-label" id="curLabel">補正值 (Offset)</div>
+    <div class="val-display" id="curVal">175</div>
     
     <div class="slider-container">
-        <input type="range" id="slider" min="0" max="1000" value="300">
+        <input type="range" id="slider" min="0" max="1000" value="175">
     </div>
 
-    <!-- 2. 切換要調整哪一個數值 (Offset / X / Z) -->
-    <div class="nav-group">
-        <div class="nav-btn" id="prev">&lt;</div>
-        <div class="mode-title" id="mode">補正值 (Offset)</div>
-        <div class="nav-btn" id="next">&gt;</div>
+    <div class="btn-grid">
+        <button class="ctrl-btn" style="grid-area: up" onclick="move('up')">▲</button>
+        <button class="ctrl-btn" style="grid-area: left" onclick="move('left')">◀</button>
+        <button class="ctrl-btn" style="grid-area: down" onclick="move('down')">▼</button>
+        <button class="ctrl-btn" style="grid-area: right" onclick="move('right')">▶</button>
     </div>
 
-    <!-- 3. 完整計算結果表 (參考 6664.jpg) -->
     <table class="res-table">
-        <tr>
-            <th>X</th>
-            <th>Z</th>
-            <th>X1</th>
-            <th>Z1</th>
-        </tr>
-        <tr>
-            <td id="td_x">200</td>
-            <td id="td_z">100</td>
-            <td id="td_x1" class="highlight">468</td>
-            <td id="td_z1" class="highlight">234</td>
+        <tr><th>X</th><th>Z</th><th>X1</th><th>Z1</th></tr>
+        <tr id="row0">
+            <td id="td_x0">0</td><td id="td_z0">0</td>
+            <td id="td_rx0" class="highlight">-</td><td id="td_rz0" class="highlight">-</td>
         </tr>
     </table>
 </div>
 
 <script>
     const slider = document.getElementById('slider');
-    const valDisplay = document.getElementById('val');
-    const modeDisplay = document.getElementById('mode');
-    
-    // 儲存三個輸入項的數值 (參考 6664.jpg 初始值)
+    const curVal = document.getElementById('curVal');
+    const curLabel = document.getElementById('curLabel');
+
+    // 數據結構：對應您的 id0 ~ id2 (手錶版先簡化為一組輸入以維持大字體)
     let data = {
-        "補正值 (Offset)": 300,
-        "X 座標": 200,
-        "Z 座標": 100
+        offset: 175,
+        x: 0,
+        z: 0
     };
-    const modes = Object.keys(data);
-    let currentIndex = 0;
+    
+    const fields = ["offset", "x", "z"];
+    const labels = ["補正值 (Offset)", "X 座標", "Z 座標"];
+    let currentIdx = 0;
 
-    function calculate() {
-        const offset = data["補正值 (Offset)"];
-        const x = data["X 座標"];
-        const z = data["Z 座標"];
+    function run() {
+        const o = data.offset;
+        const x = data.x;
+        const z = data.z;
 
-        // 根據 6664.jpg 的比例 (468/200 ≒ 2.34) 模擬公式
-        // 請在此處填入您真正的工業計算公式
-        const x1 = Math.round(x * (offset / 128.2)); 
-        const z1 = Math.round(z * (offset / 128.2));
-
-        document.getElementById('td_x').innerText = x;
-        document.getElementById('td_z').innerText = z;
-        document.getElementById('td_x1').innerText = x1;
-        document.getElementById('td_z1').innerText = z1;
+        if (x !== 0 || z !== 0) {
+            // 您的原始公式
+            const L = Math.sqrt(x * x + z * z);
+            const r = L === 0 ? 1 : (L + o) / L;
+            document.getElementById('td_rx0').innerText = Math.round(x * r);
+            document.getElementById('td_rz0').innerText = Math.round(z * r);
+        } else {
+            document.getElementById('td_rx0').innerText = "-";
+            document.getElementById('td_rz0').innerText = "-";
+        }
+        
+        document.getElementById('td_x0').innerText = x;
+        document.getElementById('td_z0').innerText = z;
     }
 
     function updateUI() {
-        const currentKey = modes[currentIndex];
-        modeDisplay.innerText = currentKey;
-        slider.value = data[currentKey];
-        valDisplay.innerText = data[currentKey];
-        calculate();
+        const key = fields[currentIdx];
+        curLabel.innerText = labels[currentIdx];
+        curVal.innerText = data[key];
+        slider.value = data[key];
+        
+        // 切換時表格高亮提醒
+        document.getElementById('row0').className = (currentIdx > 0) ? "active-row" : "";
+        run();
     }
 
-    // 按鈕控制
-    document.getElementById('plus').onclick = () => { slider.value++; slider.oninput(); };
-    document.getElementById('minus').onclick = () => { slider.value--; slider.oninput(); };
-    document.getElementById('next').onclick = () => { currentIndex = (currentIndex + 1) % modes.length; updateUI(); };
-    document.getElementById('prev').onclick = () => { currentIndex = (currentIndex - 1 + modes.length) % modes.length; updateUI(); };
+    function move(dir) {
+        if (dir === 'up') currentIdx = (currentIdx - 1 + fields.length) % fields.length;
+        if (dir === 'down') currentIdx = (currentIdx + 1) % fields.length;
+        if (dir === 'left') data[fields[currentIdx]]--;
+        if (dir === 'right') data[fields[currentIdx]]++;
+        updateUI();
+    }
 
     slider.oninput = () => {
-        data[modes[currentIndex]] = parseInt(slider.value);
-        valDisplay.innerText = slider.value;
-        calculate();
+        data[fields[currentIdx]] = parseInt(slider.value);
+        curVal.innerText = slider.value;
+        run();
     };
 
-    // 錶圈轉盤控制
+    // 支援 Watch8 實體錶圈 (Wheel)
     window.addEventListener('wheel', (e) => {
-        if (e.deltaY < 0) slider.value = parseInt(slider.value) + 1;
-        else slider.value = parseInt(slider.value) - 1;
-        slider.oninput();
+        const step = 1;
+        if (e.deltaY < 0) data[fields[currentIdx]] += step;
+        else data[fields[currentIdx]] -= step;
+        updateUI();
         e.preventDefault();
     }, { passive: false });
 
